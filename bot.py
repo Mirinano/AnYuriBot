@@ -31,7 +31,6 @@ class AnYuriBot:
         else:
             name = message.author.nick
         em.set_author(name = name, icon_url=message.author.avatar_url)
-        del name
         return em
     
     @asyncio.coroutine
@@ -41,9 +40,6 @@ class AnYuriBot:
             embed = embed.to_dict()
         data = yield from client.http.send_message(server_dict[idol]["ch_id"], content, guild_id=server_dict[idol]["server_id"], tts=tts, embed=embed)
         message = client.connection._create_message(channel=client.get_channel(data.get('channel_id')), **data)
-        del data
-        del embed
-        del content
         return message
     
     @asyncio.coroutine
@@ -52,9 +48,6 @@ class AnYuriBot:
         embed = embed.to_dict() if embed else None
         data = yield from client.http.edit_message(id, server_dict[idol]["ch_id"], content, guild_id=server_dict[idol]["server_id"], embed=embed)
         client.connection._create_message(channel=client.get_channel(server_dict[idol]["ch_id"]), **data)
-        del data
-        del embed
-        del content
 
     def save_msg(self, idol, reception, send):
         file_name = "./msg_id_log/" + reception.timestamp.strftime("%Y-%m") + "/" + reception.timestamp.strftime("%d") + "/" + idol + ".txt"
@@ -63,11 +56,8 @@ class AnYuriBot:
             os.makedirs(file_dir)
         else:
             pass
-        del file_dir
         with open(file_name, "a", encoding="utf-8") as f:
             f.write(reception.id + "," + send.id + "\n")
-        del f
-        del file_name
     
     def search_msg(self, idol, msg):
         file_name = "./msg_id_log/" + msg.timestamp.strftime("%Y-%m") + "/" + msg.timestamp.strftime("%d") + "/" + idol + ".txt"
@@ -82,10 +72,6 @@ class AnYuriBot:
                 else:
                     line = f.readline()
                     id = False
-            del line
-            del line_list
-        del file_name
-        del f
         return id
 
 ayb = AnYuriBot()
@@ -110,9 +96,6 @@ async def on_message(message):
         idol_name = ayb.check_idol(message.channel.id)
         send_message = await ayb.send_msg(idol=idol_name, embed=ayb.get_embed(message))
         ayb.save_msg(idol=idol_name, reception=message, send=send_message)
-        del message
-        del idol_name
-        del send_message
     else:
         pass
 
@@ -125,9 +108,5 @@ async def on_message_edit(befor, after):
         idol_name = ayb.check_idol(befor.channel.id)
         id = ayb.search_msg(idol=idol_name, msg=befor)
         await ayb.edit_msg(idol=idol_name, id=id, embed=ayb.get_embed(after))
-        del befor
-        del after
-        del idol_name
-        del id
 
 client.run("Token")
