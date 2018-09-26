@@ -8,17 +8,17 @@ from os.path import split as path_split
 
 client = discord.Client()
 
-home_dir = "C:/Users/cs18087/Documents/ProgramCode/Discord/あんゆり/"
+home_dir = ""
 
 # create server and channel info's dict
 server_dict = dict()
 server_dict["anna"] = {
-    "ch_id" : "494526720402128899",
-    "server_id" : "494526720402128897"
+    "ch_id" : "",
+    "server_id" : ""
 }
 server_dict["yuriko"] = {
-    "ch_id" : "494526830968307724",
-    "server_id" : "494526830968307722"
+    "ch_id" : "",
+    "server_id" : ""
 }
 
 class AnYuriBot:    
