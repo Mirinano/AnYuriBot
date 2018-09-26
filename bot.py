@@ -50,7 +50,7 @@ class AnYuriBot:
         client.connection._create_message(channel=client.get_channel(server_dict[idol]["ch_id"]), **data)
 
     def save_msg(self, idol, reception, send):
-        file_name = "./msg_id_log/" + reception.timestamp.strftime("%Y-%m") + "/" + reception.timestamp.strftime("%d") + "/" + idol + ".txt"
+        file_name = home_dir + "msg_id_log/" + reception.timestamp.strftime("%Y-%m") + "/" + reception.timestamp.strftime("%d") + "/" + idol + ".txt"
         file_dir = os.path.dirname(file_name)
         if not os.path.exists(file_dir):
             os.makedirs(file_dir)
@@ -60,7 +60,7 @@ class AnYuriBot:
             f.write(reception.id + "," + send.id + "\n")
     
     def search_msg(self, idol, msg):
-        file_name = "./msg_id_log/" + msg.timestamp.strftime("%Y-%m") + "/" + msg.timestamp.strftime("%d") + "/" + idol + ".txt"
+        file_name = home_dir + "msg_id_log/" + msg.timestamp.strftime("%Y-%m") + "/" + msg.timestamp.strftime("%d") + "/" + idol + ".txt"
         with open(file_name, "r", encoding="utf-8") as f:
             line = f.readline()
             while line:
@@ -73,6 +73,18 @@ class AnYuriBot:
                     line = f.readline()
                     id = False
         return id
+
+    def file_action(self, message, idol):
+        file_list = list()
+        opener = urllib.request.build_opener()
+        opener.addheaders=[("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0")]
+        urllib.request.install_opener(opener)
+        for sent_file in message.attachments:
+            url = sent_file["proxy_url"]
+            file_name = home_dir + "file_log/" + sent_file["filename"]
+            urllib.request.urlretrieve(url=url, filename=file_name)
+            file_list.append(file_name)
+        return file_list
 
 ayb = AnYuriBot()
 
@@ -95,6 +107,13 @@ async def on_message(message):
     if message.author != client.user:
         idol_name = ayb.check_idol(message.channel.id)
         send_message = await ayb.send_msg(idol=idol_name, embed=ayb.get_embed(message))
+        if message.attachments != list():
+            file_list = ayb.file_action(message=message, idol=idol_name)
+            channel = client.get_channel(server_dict[idol_name]["ch_id"])
+            for fl in file_list:
+                await client.send_file(channel, fl)
+        else:
+            pass
         ayb.save_msg(idol=idol_name, reception=message, send=send_message)
     else:
         pass
