@@ -101,9 +101,6 @@ async def on_message(message):
 
 @client.event
 async def on_message_edit(befor, after):
-    print("edit_message")
-    print(type(befor))
-    print(type(after))
     if befor.author != client.user:
         idol_name = ayb.check_idol(befor.channel.id)
         id = ayb.search_msg(idol=idol_name, msg=befor)
