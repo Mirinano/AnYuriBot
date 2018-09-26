@@ -130,5 +130,24 @@ async def on_message_edit(befor, after):
         idol_name = ayb.check_idol(befor.channel.id)
         id = ayb.search_msg(idol=idol_name, msg=befor)
         await ayb.edit_msg(idol=idol_name, id=id, embed=ayb.get_embed(after))
+        
+ @client.event
+async def on_reaction_add(reaction, user):
+    if user != client.user:
+        idol_name = ayb.check_idol(reaction.message.channel.id)
+        msg_id = ayb.search_msg(idol=idol_name, msg=reaction.message)
+        channel = client.get_channel(server_dict[idol_name]["ch_id"])
+        message = await client.get_message(channel, msg_id)
+        print(type(message))
+        await client.add_reaction(message, reaction.emoji)
+        
+@client.event
+async def on_reaction_remove(reaction, user):
+    if user != client.user:
+        idol_name = ayb.check_idol(reaction.message.channel.id)
+        msg_id = ayb.search_msg(idol=idol_name, msg=reaction.message)
+        channel = client.get_channel(server_dict[idol_name]["ch_id"])
+        message = await client.get_message(channel, msg_id)
+        await client.remove_reaction(message, reaction.emoji, client.user)
 
 client.run("Token")
