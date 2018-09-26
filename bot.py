@@ -1,8 +1,14 @@
 import discord
 import asyncio
 import os
+import sys
+import urllib.request
+import io
+from os.path import split as path_split
 
 client = discord.Client()
+
+home_dir = "C:/Users/cs18087/Documents/ProgramCode/Discord/あんゆり/"
 
 # create server and channel info's dict
 server_dict = dict()
