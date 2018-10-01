@@ -123,7 +123,7 @@ async def on_message(message):
         idol_name = ayb.check_idol(message.channel.id)
         send_message = await ayb.send_msg(idol=idol_name, embed=ayb.get_embed(message))
         if message.attachments != list():
-            file_list = ayb.file_action(message=message, idol=idol_name)
+            file_list = ayb.file_action(message=message)
             channel = client.get_channel(server_dict[idol_name]["ch_id"])
             for fl in file_list:
                 if fl["type"] == "file":
