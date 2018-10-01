@@ -5,11 +5,11 @@ import sys
 import urllib.request
 import io
 from os.path import split as path_split
+from discord.emoji import Emoji
 
 client = discord.Client()
 
 home_dir = ""
-
 # create server and channel info's dict
 server_dict = dict()
 server_dict["anna"] = {
@@ -22,10 +22,10 @@ server_dict["yuriko"] = {
 }
 
 class AnYuriBot:    
-    def check_idol(self, id):
-        if id == server_dict["anna"]["ch_id"]:
+    def check_idol(self, msg_id):
+        if msg_id == server_dict["anna"]["ch_id"]:
             return "yuriko"
-        elif id == server_dict["yuriko"]["ch_id"]:
+        elif msg_id == server_dict["yuriko"]["ch_id"]:
             return "anna"
         else:
             return False
@@ -49,11 +49,15 @@ class AnYuriBot:
         return message
     
     @asyncio.coroutine
-    def edit_msg(self, idol, id, content=None, embed=None):
+    def edit_msg(self, idol, msg_id, content=None, embed=None):
         content = str(content) if content is not None else None
         embed = embed.to_dict() if embed else None
-        data = yield from client.http.edit_message(id, server_dict[idol]["ch_id"], content, guild_id=server_dict[idol]["server_id"], embed=embed)
+        data = yield from client.http.edit_message(msg_id, server_dict[idol]["ch_id"], content, guild_id=server_dict[idol]["server_id"], embed=embed)
         client.connection._create_message(channel=client.get_channel(server_dict[idol]["ch_id"]), **data)
+    
+    @asyncio.coroutine
+    def del_msg(self, idol, msg_id):
+        yield from client.http.delete_message(server_dict[idol]["ch_id"], msg_id, server_dict[idol]["server_id"])
 
     def save_msg(self, idol, reception, send):
         file_name = home_dir + "msg_id_log/" + reception.timestamp.strftime("%Y-%m") + "/" + reception.timestamp.strftime("%d") + "/" + idol + ".txt"
@@ -73,12 +77,12 @@ class AnYuriBot:
                 line.strip("\n")
                 line_list = line.split(",")
                 if msg.id == line_list[0]:
-                    id = line_list[1]
+                    msg_id = line_list[1]
                     break
                 else:
                     line = f.readline()
-                    id = False
-        return id
+                    msg_id = False
+        return msg_id
 
     def file_action(self, message, idol):
         file_list = list()
@@ -88,16 +92,21 @@ class AnYuriBot:
         for sent_file in message.attachments:
             url = sent_file["proxy_url"]
             file_name = home_dir + "file_log/" + sent_file["filename"]
-            urllib.request.urlretrieve(url=url, filename=file_name)
-            file_list.append(file_name)
+            info = dict()
+            if sent_file["size"] < 8*1024*1024:
+                info["type"] = "file"
+                info["file_name"] = file_name
+                urllib.request.urlretrieve(url=url, filename=file_name) # save file if type is file.
+            else:
+                info["type"] = "url"
+                info["url"] = url
+            file_list.append(info)
         return file_list
 
 ayb = AnYuriBot()
 
 @client.event
 async def on_ready():
-    print("+---------------------------+")
-    print("|         login_info        |")
     print("+---------------------------+")
     print("|          BOT_info         |")
     print("| name: " + client.user.name + "        |")
@@ -117,7 +126,13 @@ async def on_message(message):
             file_list = ayb.file_action(message=message, idol=idol_name)
             channel = client.get_channel(server_dict[idol_name]["ch_id"])
             for fl in file_list:
-                await client.send_file(channel, fl)
+                if fl["type"] == "file":
+                    await client.send_file(channel, fl["file_name"])
+                    os.remove(fl) #delete_file
+                elif fl["type"] == "url":
+                    await ayb.send_msg(idol=idol_name, content=fl["url"])
+                else:
+                    pass
         else:
             pass
         ayb.save_msg(idol=idol_name, reception=message, send=send_message)
@@ -128,26 +143,14 @@ async def on_message(message):
 async def on_message_edit(befor, after):
     if befor.author != client.user:
         idol_name = ayb.check_idol(befor.channel.id)
-        id = ayb.search_msg(idol=idol_name, msg=befor)
-        await ayb.edit_msg(idol=idol_name, id=id, embed=ayb.get_embed(after))
-        
- @client.event
-async def on_reaction_add(reaction, user):
-    if user != client.user:
-        idol_name = ayb.check_idol(reaction.message.channel.id)
-        msg_id = ayb.search_msg(idol=idol_name, msg=reaction.message)
-        channel = client.get_channel(server_dict[idol_name]["ch_id"])
-        message = await client.get_message(channel, msg_id)
-        print(type(message))
-        await client.add_reaction(message, reaction.emoji)
+        msg_id = ayb.search_msg(idol=idol_name, msg=befor)
+        await ayb.edit_msg(idol=idol_name, msg_id=msg_id, embed=ayb.get_embed(after))
         
 @client.event
-async def on_reaction_remove(reaction, user):
-    if user != client.user:
-        idol_name = ayb.check_idol(reaction.message.channel.id)
-        msg_id = ayb.search_msg(idol=idol_name, msg=reaction.message)
-        channel = client.get_channel(server_dict[idol_name]["ch_id"])
-        message = await client.get_message(channel, msg_id)
-        await client.remove_reaction(message, reaction.emoji, client.user)
+async def on_message_delete(message):
+    if message.author != client.user:
+        idol_name = ayb.check_idol(message.channel.id)
+        msg_id = ayb.search_msg(idol=idol_name, msg=message)
+        await ayb.del_msg(idol=idol_name, msg_id=msg_id)
 
 client.run("Token")
