@@ -84,7 +84,7 @@ class AnYuriBot:
                     msg_id = False
         return msg_id
 
-    def file_action(self, message, idol):
+    def file_action(self, message):
         file_list = list()
         opener = urllib.request.build_opener()
         opener.addheaders=[("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0")]
