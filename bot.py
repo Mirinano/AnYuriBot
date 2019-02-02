@@ -4,6 +4,7 @@ import os
 import sys
 import urllib.request
 import io
+import time, datetime
 from os.path import split as path_split
 from discord.emoji import Emoji
 
