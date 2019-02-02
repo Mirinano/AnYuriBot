@@ -127,8 +127,9 @@ ayb = AnYuriBot()
 
 @client.event
 async def on_ready():
-    await client.send_message(client.get_channel("501202617112854532"), client.user.name + "起動しました。\n起動時刻: " + datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
-
+    # await client.send_message(client.get_channel("501202617112854532"), client.user.name + "起動しました。\n起動時刻: " + datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
+    print("start!")
+    
 @client.event
 async def on_message(message):
     if message.author != client.user:
