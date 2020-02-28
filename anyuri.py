@@ -30,6 +30,7 @@ class Bot():
     async def boot_action(self):
         self.set_channel()
         await self.check_permissions()
+        await self.launch_report()
 
     def set_channel(self):
         self.anna_ch = self.client.get_channel(info["anna"]["ch"])
@@ -37,8 +38,10 @@ class Bot():
         self.report_ch = self.client.get_channel(report_ch_id)
 
     async def check_permissions(self) -> bool:
+        member = self.anna_ch.server.get_member(self.client.user.id)
         if not self.anna_ch.permissions_for(member).read_messages:
             await self.permission_error("杏奈")
+        member = self.yuriko_ch.server.get_member(self.client.user.id)
         if not self.yuriko_ch.permissions_for(member).read_messages:
             await self.permission_error("百合子")
     
@@ -54,14 +57,17 @@ class Bot():
         if url is None:
             return None
         content = self.create_content(msg)
-        self.send(url, send)
+        self.send(url, content)
         
     def create_content(self, msg:discord.message):
-        return {
+        data = {
             "username" : msg.author.name,
             "avatar_url" : msg.author.avatar_url,
             "content" : msg.content
         }
+        if len(msg.attachments) > 0:
+            data["embeds"] = [ {"image" : {"url" : attach["url"]}} for attach in msg.attachments]
+        return data
     
     def send(self, url:str, content:dict):
         content = json.dumps(content)
@@ -70,13 +76,14 @@ class Bot():
 client = discord.Client()
 bot = Bot(client)
 
-@bot.event
+@client.event
 async def on_ready():
     print("start")
     await bot.boot_action()
 
 @client.event
 async def on_message(message):
-    bot.action(message)
+    if not message.author.bot:
+        bot.action(message)
 
-bot.run(TOKEN)
+client.run(TOKEN)
